@@ -98,7 +98,7 @@ GameObject:
   - component: {fileID: 4807236908242575682}
   m_Layer: 6
   m_Name: Dog
-  m_TagString: Untagged
+  m_TagString: Threat
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -132,15 +132,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37e48f9857b3b40268cc78ef25ba5c9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetsLayer:
-    serializedVersion: 2
-    m_Bits: 0
-  obstaclesLayer:
-    serializedVersion: 2
-    m_Bits: 0
-  friendTag: Friend
-  threatTag: Thread
-  safeZoneTag: SafeZone
 --- !u!1 &4259236394591651595
 GameObject:
   m_ObjectHideFlags: 0

@@ -18,6 +18,8 @@ namespace GDD3400.Project01
         private float _maxSpeed = 5f;
         private float _sightRadius = 7.5f;
 
+        [NonSerialized] private float _turnRate = 5f;
+
         // Layers - Set In Project Settings
         private LayerMask _targetsLayer;
         private LayerMask _obstaclesLayer;
@@ -27,7 +29,8 @@ namespace GDD3400.Project01
         private string threatTag = "Threat";
         private string safeZoneTag = "SafeZone";
 
-        Collider _target;
+        //no target to chase
+        Collider _target = null;
 
         float stoppingDistance;
 
@@ -47,6 +50,8 @@ namespace GDD3400.Project01
 
         Collider _safeZone;
 
+        Vector3 velocity;
+
         public enum Dogstate
         {
             None,
@@ -55,7 +60,7 @@ namespace GDD3400.Project01
             Scaning
         }
 
-        Dogstate currentState = Dogstate.None;
+        Dogstate currentState = Dogstate.Chasing;
 
         public void Awake()
         {
@@ -78,7 +83,12 @@ namespace GDD3400.Project01
 
         private void Perception()
         {
+
+
+            //clear our tracked targets 
             _trackedTargets.Clear();
+
+            //get reference to the safe zone
             if(_safeZone== null)
             {
                 _safeZone = GameObject.FindGameObjectWithTag(safeZoneTag).GetComponent<Collider>();
@@ -91,15 +101,18 @@ namespace GDD3400.Project01
             //do collison here and store data in the _tmpTargets
             int t = Physics.OverlapSphereNonAlloc(transform.position, _sightRadius, _tmpTargets,_targetsLayer);
 
+
+
             //loop over every target we collected in the sight radius
-            for(int i=0;i<t; i++)
+            for (int i = 0; i < t; i++)
             {
                 var c = _tmpTargets[i];
-                if (c.tag == friendTag)
+                if (c != _safeZone || c!=GetComponent<Collider>())
                 {
+                    //track the target if it is not the safe zone or ourself
                     _trackedTargets.Add(c);
+                    Debug.Log("tracked target");
                 }
-                
             }
             switch (currentState)
             {
@@ -132,8 +145,6 @@ namespace GDD3400.Project01
 
            
 
-            
-
 
         }
 
@@ -144,7 +155,27 @@ namespace GDD3400.Project01
         private void FixedUpdate()
         {
             if (!_isActive) return;
-            
+
+            //if we have a target and the distance to the target is still greater than the stopping distance
+            if (_target != null && Vector3.Distance(transform.position, _target.transform.position) >= stoppingDistance)
+            {
+                Vector3 direction = (_target.transform.position - transform.position).normalized;
+               velocity = direction * Mathf.Min(_targetSpeed,Vector3.Distance(transform.position,_target.transform.position));
+            }else if ((_target != null && Vector3.Distance(transform.position, _target.transform.position) < stoppingDistance))
+            {
+                //if we have reached our target, then set our new state to going toward the goal
+                currentState = Dogstate.None;
+            }
+
+            //if our velocity is not zero
+            if (velocity != Vector3.zero)
+            {
+                //look in the direction of our velocity
+                Quaternion lookRoation = Quaternion.LookRotation(velocity);
+
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRoation, _turnRate);
+            }
+
         }
 
         void Patrol()
@@ -159,6 +190,8 @@ namespace GDD3400.Project01
         void Chase()
         {
             _target = FindClosestTarget();
+            _targetSpeed = _maxSpeed;
+            Debug.Log(_target);
         }
         void GotoGoal()
         {
@@ -168,17 +201,20 @@ namespace GDD3400.Project01
 
         Collider FindClosestTarget()
         {
-            float closestDistance = 99999;
+            float closestDistance = float.MaxValue;
             Collider colliderclosest = null;
-            if(_trackedTargets.Count==0) return null;
-            foreach(Collider target in _trackedTargets)
+            if (_trackedTargets.Count > 0)
             {
-                if ((target.transform.position - transform.position).magnitude > closestDistance)
+                foreach (Collider target in _trackedTargets)
                 {
-                    closestDistance = (target.transform.position - transform.position).magnitude;
-                    colliderclosest= target;
+                    float distance = (transform.position - target.transform.position).magnitude;
+                    if(distance < closestDistance) {
+                         closestDistance = distance;
+                        colliderclosest = target;
+                     }
                 }
             }
+           
             return colliderclosest;
         }
 
