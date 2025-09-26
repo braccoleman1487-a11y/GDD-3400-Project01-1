@@ -26,6 +26,7 @@ namespace GDD3400.Project01
 
         // Layers - Set In Project Settings
         private LayerMask _targetsLayer;
+        private LayerMask _obstacleLayer;
 
         // Tags - Set In Project Settings
         private const string _friendTag = "Friend";
@@ -45,7 +46,7 @@ namespace GDD3400.Project01
 
         // Dynamic Movement Variables
         private Vector3 _velocity;
-        private float _targetSpeed;
+        public float _targetSpeed;
         private Vector3 _target;
         private Vector3 _floatingTarget;
         private Collider[] _tmpTargets = new Collider[16]; // Maximum of 16 targets in each perception check
@@ -54,12 +55,19 @@ namespace GDD3400.Project01
         private Collider _safeZoneTarget;
         private List<Collider> _friendTargets = new List<Collider>();
 
+        Quaternion _targetRotation;
+
+        float angle_offset = 45;
+
+       
+
         public void Awake()
         {
             // Find the layers in the project settings
             _targetsLayer = LayerMask.GetMask("Targets");
-
+            _obstacleLayer = LayerMask.GetMask("Obstacles");
             _rb = GetComponent<Rigidbody>();
+           
         }
 
         public void Initialize(Level level, int index)
@@ -97,6 +105,7 @@ namespace GDD3400.Project01
             _friendTargets.Clear();
             _threatTarget = null;
             _safeZoneTarget = null;
+
 
             // Collect all target colliders within the sight radius
             int t = Physics.OverlapSphereNonAlloc(transform.position, _sightRadius, _tmpTargets, _targetsLayer);
